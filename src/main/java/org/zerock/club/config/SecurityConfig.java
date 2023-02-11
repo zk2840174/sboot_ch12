@@ -16,8 +16,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.zerock.club.security.filter.ApiCheckFilter;
+import org.zerock.club.security.filter.ApiLoginFilter;
 import org.zerock.club.security.handler.ClubLoginSuccessHandler;
+import org.zerock.club.security.util.JWTUtil;
 
 @Configuration
 @EnableWebSecurity
@@ -52,6 +56,24 @@ public class SecurityConfig {
 
         http.rememberMe().tokenValiditySeconds(60*60*24*7);
 
+        //add Filter
+        http.addFilterBefore(apiCheckFilter(), UsernamePasswordAuthenticationFilter.class);
+
+
+        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        //authenticationManagerBuilder.userDetailsService(apiUserDetailsService).passwordEncoder(passwordEncoder());
+        // Get AuthenticationManager
+        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
+
+        //반드시 필요
+        http.authenticationManager(authenticationManager);
+
+        //APILoginFilter
+        ApiLoginFilter apiLoginFilter =  new ApiLoginFilter("/api/login", jwtUtil());
+        apiLoginFilter.setAuthenticationManager(authenticationManager);
+
+        http.addFilterBefore(apiLoginFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -69,4 +91,19 @@ public class SecurityConfig {
     public ClubLoginSuccessHandler clubLoginSuccessHandler() {
         return new ClubLoginSuccessHandler(passwordEncoder());
     }
+
+    @Bean
+    public ApiCheckFilter apiCheckFilter() {
+
+        return new ApiCheckFilter("/notes/**/*", jwtUtil());
+    }
+
+    @Bean
+    public JWTUtil jwtUtil() {
+        return new JWTUtil();
+    }
+
+
+
+
 }
