@@ -4,6 +4,8 @@ package org.zerock.club.entity;
 import lombok.*;
 
 import jakarta.persistence.*;
+
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -24,9 +26,11 @@ public class ClubMember extends BaseEntity {
     private boolean fromSocial;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    private Set<ClubMemberRole> roleSet;
+    @Builder.Default
+    private Set<ClubMemberRole> roleSet = new HashSet<>();
 
     public void addMemberRole(ClubMemberRole clubMemberRole){
+
         roleSet.add(clubMemberRole);
     }
 
